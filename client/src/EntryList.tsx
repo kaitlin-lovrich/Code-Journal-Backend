@@ -1,12 +1,25 @@
 import { FaPencilAlt } from 'react-icons/fa';
 import { Entry, readEntries } from './data';
+import { useEffect, useState } from 'react';
 
 type Props = {
   onCreate: () => void;
   onEdit: (entry: Entry) => void;
 };
 export default function EntryList({ onCreate, onEdit }: Props) {
-  const entries = readEntries();
+  const [entries, setEntries] = useState<Entry[]>();
+  useEffect(() => {
+    async function load() {
+      try {
+        const entries = await readEntries();
+        setEntries(entries);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    load();
+  }, []);
+
   return (
     <div className="container">
       <div className="row">
@@ -25,9 +38,10 @@ export default function EntryList({ onCreate, onEdit }: Props) {
       <div className="row">
         <div className="column-full">
           <ul className="entry-ul">
-            {entries.map((entry) => (
-              <EntryCard key={entry.entryId} entry={entry} onEdit={onEdit} />
-            ))}
+            {entries &&
+              entries.map((entry) => (
+                <EntryCard key={entry.entryId} entry={entry} onEdit={onEdit} />
+              ))}
           </ul>
         </div>
       </div>
