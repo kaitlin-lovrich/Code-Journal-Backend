@@ -1,24 +1,49 @@
-import { FaPencilAlt } from 'react-icons/fa';
-import { Entry, readEntries } from './data';
 import { useEffect, useState } from 'react';
+import { FaPencilAlt } from 'react-icons/fa';
+import { readEntries } from './data';
+
+export type UnsavedEntry = {
+  title: string;
+  photoUrl: string;
+  notes: string;
+};
+export type Entry = UnsavedEntry & {
+  entryId: number;
+};
 
 type Props = {
   onCreate: () => void;
   onEdit: (entry: Entry) => void;
 };
-export default function EntryList({ onCreate, onEdit }: Props) {
+export function EntryList({ onCreate, onEdit }: Props) {
+  const [isLoading, setIsLoading] = useState<boolean>();
   const [entries, setEntries] = useState<Entry[]>();
+  const [error, setError] = useState<unknown>();
+
   useEffect(() => {
     async function load() {
+      setIsLoading(true);
       try {
         const entries = await readEntries();
         setEntries(entries);
       } catch (err) {
-        console.error(err);
+        setError(err);
+      } finally {
+        setIsLoading(false);
       }
     }
-    load();
-  }, []);
+    if (isLoading === undefined) load();
+  }, [isLoading]);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error)
+    return (
+      <div>
+        Error loading entries:
+        {error instanceof Error ? error.message : 'Unknown Error'}
+      </div>
+    );
+  if (!entries) return null;
 
   return (
     <div className="container">
@@ -38,10 +63,9 @@ export default function EntryList({ onCreate, onEdit }: Props) {
       <div className="row">
         <div className="column-full">
           <ul className="entry-ul">
-            {entries &&
-              entries.map((entry) => (
-                <EntryCard key={entry.entryId} entry={entry} onEdit={onEdit} />
-              ))}
+            {entries.map((entry) => (
+              <Entry key={entry.entryId} entry={entry} onEdit={onEdit} />
+            ))}
           </ul>
         </div>
       </div>
@@ -53,7 +77,7 @@ type EntryProps = {
   entry: Entry;
   onEdit: (entry: Entry) => void;
 };
-function EntryCard({ entry, onEdit }: EntryProps) {
+function Entry({ entry, onEdit }: EntryProps) {
   return (
     <li>
       <div className="row">

@@ -1,30 +1,14 @@
-export type UnsavedEntry = {
-  title: string;
-  notes: string;
-  photoUrl: string;
-};
-export type Entry = UnsavedEntry & {
-  entryId: number;
-};
-
-let data = {
-  entries: [] as Entry[],
-  nextEntryId: 1,
-};
-
-window.addEventListener('beforeunload', function () {
-  const dataJSON = JSON.stringify(data);
-  localStorage.setItem('code-journal-data', dataJSON);
-});
-
-const localData = localStorage.getItem('code-journal-data');
-if (localData) {
-  data = JSON.parse(localData);
-}
+import { type Entry, type UnsavedEntry } from './EntryList';
 
 export async function readEntries(): Promise<Entry[]> {
-  const res = await fetch('/api/entries');
-  if (!res.ok) throw new Error(`fetch Error: ${res.status}`);
+  const req = {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+    },
+  };
+  const res = await fetch('/api/entries', req);
+  if (!res.ok) throw new Error(`fetch Error ${res.status}`);
   return await res.json();
 }
 
@@ -33,11 +17,12 @@ export async function addEntry(entry: UnsavedEntry): Promise<Entry> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${sessionStorage.getItem('token')}`,
     },
     body: JSON.stringify(entry),
   };
   const res = await fetch('/api/entries', req);
-  if (!res.ok) throw new Error(`fetch Error: ${res.status}`);
+  if (!res.ok) throw new Error(`fetch Error ${res.status}`);
   return await res.json();
 }
 
@@ -46,18 +31,22 @@ export async function updateEntry(entry: Entry): Promise<Entry> {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${sessionStorage.getItem('token')}`,
     },
     body: JSON.stringify(entry),
   };
   const res = await fetch(`/api/entries/${entry.entryId}`, req);
-  if (!res.ok) throw new Error(`fetch Error: ${res.status}`);
+  if (!res.ok) throw new Error(`fetch Error ${res.status}`);
   return await res.json();
 }
 
 export async function removeEntry(entryId: number): Promise<void> {
   const req = {
     method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+    },
   };
   const res = await fetch(`/api/entries/${entryId}`, req);
-  if (!res.ok) throw new Error(`fetch Error: ${res.status}`);
+  if (!res.ok) throw new Error(`fetch Error ${res.status}`);
 }
