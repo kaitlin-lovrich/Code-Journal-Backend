@@ -34,6 +34,26 @@ app.get('/api/entries', async (req, res, next) => {
   }
 });
 
+app.get('/api/entries/:entryId', async (req, res, next) => {
+  try {
+    const entryId = Number(req.params.entryId);
+    if (!Number.isInteger(entryId)) {
+      throw new ClientError(400, 'entryId must be an integer');
+    }
+    const sql = `
+      SELECT * FROM "entries"
+      WHERE "entryId" = $1;
+    `;
+    const entry = await db.query<Entry>(sql, [entryId]);
+    const [selectedEntry] = entry.rows;
+    if (!selectedEntry)
+      throw new ClientError(404, `Entry with id ${entryId} not found`);
+    res.json(selectedEntry);
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.post('/api/entries', async (req, res, next) => {
   try {
     const { title, notes, photoUrl } = req.body as Partial<Entry>;
@@ -80,6 +100,27 @@ app.put('/api/entries/:entryId', async (req, res, next) => {
       throw new ClientError(404, `entryId: ${entryId} not found.`);
     }
     res.status(201).json(entry.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete('/api/entries/:entryId', async (req, res, next) => {
+  try {
+    const entryId = Number(req.params.entryId);
+    if (!Number.isInteger(entryId)) {
+      throw new ClientError(400, 'entryId must be an integer');
+    }
+    const sql = `
+      DELETE FROM "entries"
+        WHERE "entryId" = $1
+        RETURNING *;
+    `;
+    const entry = await db.query<Entry>(sql, [entryId]);
+    const [deleted] = entry.rows;
+    if (!deleted)
+      throw new ClientError(404, `Entry with id ${entryId} not found`);
+    res.sendStatus(204);
   } catch (err) {
     next(err);
   }
