@@ -1,5 +1,6 @@
-import { FormEvent, useState } from 'react';
-import { Entry, addEntry, removeEntry, updateEntry } from './data';
+import { type FormEvent, useState } from 'react';
+import { addEntry, removeEntry, updateEntry } from './data';
+import type { Entry } from './EntryList';
 
 /**
  * Form that adds or edits an entry.
@@ -10,27 +11,43 @@ type Props = {
   entry: Entry | null;
   onSubmit: () => void;
 };
-export default function EntryForm({ entry, onSubmit }: Props) {
+export function EntryForm({ entry, onSubmit }: Props) {
+  const [isLoading, setIsLoading] = useState<boolean>();
   const [title, setTitle] = useState(entry?.title ?? '');
   const [photoUrl, setPhotoUrl] = useState(entry?.photoUrl ?? '');
   const [notes, setNotes] = useState(entry?.notes ?? '');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const newEntry = { title, photoUrl, notes };
-    if (entry) {
-      updateEntry({ ...entry, ...newEntry });
-    } else {
-      addEntry(newEntry);
+    try {
+      setIsLoading(true);
+      if (entry) {
+        await updateEntry({ ...entry, ...newEntry });
+      } else {
+        await addEntry(newEntry);
+      }
+      onSubmit();
+    } catch (err) {
+      alert(`Error saving changes: ${err}`);
+    } finally {
+      setIsLoading(false);
     }
-    onSubmit();
   }
 
-  function handleDelete() {
-    if (!entry) throw new Error('Should never happen');
-    removeEntry(entry.entryId);
-    onSubmit();
+  async function handleDelete() {
+    if (!entry) throw new Error('Should not happen');
+    try {
+      setIsLoading(true);
+      await removeEntry(entry.entryId);
+      onSubmit();
+    } catch (err) {
+      alert(`Error deleting entry: ${err}`);
+    } finally {
+      setIsLoading(false);
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -91,13 +108,16 @@ export default function EntryForm({ entry, onSubmit }: Props) {
           <div className="column-full d-flex justify-between">
             {entry && (
               <button
+                disabled={isLoading}
                 className="delete-entry-button"
                 type="button"
                 onClick={() => setIsDeleting(true)}>
                 Delete Entry
               </button>
             )}
-            <button className="input-b-radius text-padding purple-background white-text">
+            <button
+              disabled={isLoading}
+              className="input-b-radius text-padding purple-background white-text">
               SAVE
             </button>
           </div>

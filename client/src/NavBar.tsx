@@ -1,7 +1,9 @@
+export type PageType = 'journal' | 'register' | 'sign-in' | 'sign-out';
+
 type Props = {
-  onEntries: () => void;
+  onNavigate: (page: PageType) => void;
 };
-export function NavBar({ onEntries }: Props) {
+export function NavBar({ onNavigate }: Props) {
   return (
     <header className="header purple-background">
       <div className="container">
@@ -11,9 +13,27 @@ export function NavBar({ onEntries }: Props) {
             <h3>
               <button
                 type="button"
-                onClick={onEntries}
+                onClick={() => onNavigate('journal')}
                 className="entries-link white-text">
                 Entries
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('register')}
+                className="entries-link white-text">
+                Register
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('sign-in')}
+                className="entries-link white-text">
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('sign-out')}
+                className="entries-link white-text">
+                Sign Out
               </button>
             </h3>
           </div>
